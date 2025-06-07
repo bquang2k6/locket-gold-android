@@ -1,0 +1,26 @@
+{
+  "name": "apk-store",
+  "version": "1.0.0",
+  "description": "APK Download Store with Vercel KV",
+  "main": "index.html",
+  "scripts": {
+    "start-dev": "vercel dev",
+    "build": "echo 'No build step needed'",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.1"
+  },
+  "devDependencies": {
+    "vercel": "^32.7.2"
+  },
+  "keywords": [
+    "apk",
+    "download",
+    "store",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "type": "commonjs"
+}
