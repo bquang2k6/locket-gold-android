@@ -4,13 +4,9 @@
       "runtime": "nodejs18.x"
     }
   },
-  "env": {
-    "KV_REST_API_URL": "@kv_rest_api_url",
-    "KV_REST_API_TOKEN": "@kv_rest_api_token"
-  },
   "rewrites": [
     {
-      "source": "/",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
