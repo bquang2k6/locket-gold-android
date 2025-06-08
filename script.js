@@ -16,7 +16,7 @@ const apkData = [
                 rating: 4.5,
                 size: "32 MB",
                 icon: "./icon/black.png",
-                downloadUrl: "public/black.apk",
+                downloadUrl: "public/bản màu đen.apk",
                 isNew: true
             },
             {
@@ -36,7 +36,7 @@ const apkData = [
                 rating: 4.4,
                 size: "32 MB",
                 icon: "icon/pinkk.png",
-                downloadUrl: "public/bản màu pink.apk",
+                downloadUrl: "public/màu hồng pink.apk",
                 isNew: false
             },
             {
