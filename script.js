@@ -178,7 +178,7 @@ async function downloadApp(event, appName, downloadUrl) {
     progressContainer.classList.add('show');
     progressBar.style.width = '0%';
     progressPercentage.textContent = '0%';
-    progressSize.textContent = '0 MB / 0 MB';
+    progressSize.textContent = '0 MB / 32 MB';
     progressSpeed.textContent = '0 KB/s';
 
     const controller = new AbortController();
@@ -192,6 +192,12 @@ async function downloadApp(event, appName, downloadUrl) {
     };
 
     try {
+        // Kiểm tra file tồn tại trước bằng HEAD request
+        const headResponse = await fetch(downloadUrl, { method: 'HEAD', signal });
+        if (headResponse.status === 404) {
+            throw new Error('File không tồn tại trên server!');
+        }
+
         const startTime = Date.now();
         const response = await fetch(downloadUrl, { signal });
 
@@ -199,13 +205,8 @@ async function downloadApp(event, appName, downloadUrl) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        // Kiểm tra Content-Length
         const contentLength = response.headers.get('content-length');
-        if (!contentLength) {
-            throw new Error('Server không cung cấp Content-Length!');
-        }
-
-        const total = parseInt(contentLength, 10);
+        let total = contentLength ? parseInt(contentLength, 10) : 32 * 1024 * 1024; // Giả định 24.73 MB
         let loaded = 0;
         let lastLoaded = 0;
         let lastTime = startTime;
@@ -220,7 +221,7 @@ async function downloadApp(event, appName, downloadUrl) {
             chunks.push(value);
             loaded += value.length;
 
-            const percentage = Math.round((loaded / total) * 100);
+            const percentage = contentLength ? Math.round((loaded / total) * 100) : Math.min(Math.round((loaded / (32 * 1024 * 1024)) * 100), 100);
             progressBar.style.width = `${percentage}%`;
             progressPercentage.textContent = `${percentage}%`;
             progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB / ${(total / 1024 / 1024).toFixed(2)} MB`;
@@ -240,7 +241,7 @@ async function downloadApp(event, appName, downloadUrl) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = appName.replace(/\s+/g, '_') + '.apk'; // Thay khoảng trắng bằng dấu gạch dưới
+        link.download = appName.replace(/\s+/g, '_') + '.apk';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
