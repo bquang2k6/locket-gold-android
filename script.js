@@ -181,7 +181,7 @@ const apkData = [
     progressContainer.classList.add('show');
     progressBar.style.width = '0%';
     progressPercentage.textContent = '0%';
-    progressSize.textContent = '0 MB';
+    progressSize.textContent = '0 MB / 32.00 MB';
     progressSpeed.textContent = '0 KB/s';
 
     // Khởi tạo AbortController để hủy tải xuống
@@ -204,8 +204,7 @@ const apkData = [
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const contentLength = response.headers.get('content-length');
-        const total = contentLength ? parseInt(contentLength, 10) : null;
+        const total = 33554432; // 32 MB in bytes
         let loaded = 0;
         let lastLoaded = 0;
         let lastTime = startTime;
@@ -222,19 +221,10 @@ const apkData = [
             loaded += value.length;
 
             // Cập nhật progress bar
-            if (total) {
-                // Có Content-Length
-                const percentage = Math.round((loaded / total) * 100);
-                progressBar.style.width = `${percentage}%`;
-                progressPercentage.textContent = `${percentage}%`;
-                progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB / ${(total / 1024 / 1024).toFixed(2)} MB`;
-            } else {
-                // Không có Content-Length
-                progressBar.style.width = '100%'; // Hiển thị progress bar chạy vô hạn
-                progressBar.style.animation = 'progress-indeterminate 2s linear infinite';
-                progressPercentage.textContent = 'N/A';
-                progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB`;
-            }
+            const percentage = Math.round((loaded / total) * 100);
+            progressBar.style.width = `${percentage}%`;
+            progressPercentage.textContent = `${percentage}%`;
+            progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB / 32.00 MB`;
 
             // Tính tốc độ tải
             const currentTime = Date.now();
