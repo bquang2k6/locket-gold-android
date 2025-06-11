@@ -181,7 +181,7 @@ const apkData = [
     progressContainer.classList.add('show');
     progressBar.style.width = '0%';
     progressPercentage.textContent = '0%';
-    progressSize.textContent = '0 MB';
+    progressSize.textContent = '0 MB / 0 MB';
     progressSpeed.textContent = '0 KB/s';
 
     // Khởi tạo AbortController để hủy tải xuống
@@ -205,7 +205,11 @@ const apkData = [
         }
 
         const contentLength = response.headers.get('content-length');
-        const total = contentLength ? parseInt(contentLength, 10) : null;
+        if (!contentLength) {
+            throw new Error('Server không trả về Content-Length!');
+        }
+
+        const total = parseInt(contentLength, 10);
         let loaded = 0;
         let lastLoaded = 0;
         let lastTime = startTime;
@@ -222,19 +226,10 @@ const apkData = [
             loaded += value.length;
 
             // Cập nhật progress bar
-            if (total) {
-                // Có Content-Length
-                const percentage = Math.round((loaded / total) * 100);
-                progressBar.style.width = `${percentage}%`;
-                progressPercentage.textContent = `${percentage}%`;
-                progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB / ${(total / 1024 / 1024).toFixed(2)} MB`;
-            } else {
-                // Không có Content-Length
-                progressBar.style.width = '100%'; // Hiển thị progress bar chạy vô hạn
-                progressBar.style.animation = 'progress-indeterminate 2s linear infinite';
-                progressPercentage.textContent = 'N/A';
-                progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB`;
-            }
+            const percentage = Math.round((loaded / total) * 100);
+            progressBar.style.width = `${percentage}%`;
+            progressPercentage.textContent = `${percentage}%`;
+            progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB / ${(total / 1024 / 1024).toFixed(2)} MB`;
 
             // Tính tốc độ tải
             const currentTime = Date.now();
@@ -268,7 +263,6 @@ const apkData = [
         showNotification(`Lỗi khi tải ${appName}: ${error.message}`);
     } finally {
         progressContainer.classList.remove('show');
-        progressBar.style.animation = ''; // Xóa animation nếu có
         buttons.forEach(btn => btn.disabled = false);
     }
 }
