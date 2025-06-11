@@ -164,28 +164,114 @@ const apkData = [
         }
 
         async function downloadApp(event, appName, downloadUrl) {
-            event.stopPropagation();
-            const buttons = document.querySelectorAll('.download-btn');
-            buttons.forEach(btn => btn.disabled = true);
-            
-            try {
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = appName + '.apk';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showNotification(`Đã tải ${appName} thành công!`);
-            } catch (error) {
-                console.error('Error downloading:', error);
-                showNotification(`Lỗi khi tải ${appName}. Vui lòng thử lại.`);
-            } finally {
-                setTimeout(() => {
-                    buttons.forEach(btn => btn.disabled = false);
-                }, 1000);
+    event.stopPropagation();
+    const buttons = document.querySelectorAll('.download-btn');
+    buttons.forEach(btn => btn.disabled = true);
+
+    // Hiển thị progress bar
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const progressSize = document.getElementById('progressSize');
+    const progressSpeed = document.getElementById('progressSpeed');
+    const progressTitle = document.getElementById('progressTitle');
+    const progressCancel = document.getElementById('progressCancel');
+
+    progressTitle.textContent = `Đang tải ${appName}`;
+    progressContainer.classList.add('show');
+    progressBar.style.width = '0%';
+    progressPercentage.textContent = '0%';
+    progressSize.textContent = '0 MB';
+    progressSpeed.textContent = '0 KB/s';
+
+    // Khởi tạo AbortController để hủy tải xuống
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    // Xử lý sự kiện hủy
+    progressCancel.onclick = () => {
+        controller.abort();
+        progressContainer.classList.remove('show');
+        buttons.forEach(btn => btn.disabled = false);
+        showNotification(`Đã hủy tải ${appName}`);
+    };
+
+    try {
+        const startTime = Date.now();
+        const response = await fetch(downloadUrl, { signal });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const contentLength = response.headers.get('content-length');
+        const total = contentLength ? parseInt(contentLength, 10) : null;
+        let loaded = 0;
+        let lastLoaded = 0;
+        let lastTime = startTime;
+
+        const reader = response.body.getReader();
+        const chunks = [];
+
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) break;
+
+            chunks.push(value);
+            loaded += value.length;
+
+            // Cập nhật progress bar
+            if (total) {
+                // Có Content-Length
+                const percentage = Math.round((loaded / total) * 100);
+                progressBar.style.width = `${percentage}%`;
+                progressPercentage.textContent = `${percentage}%`;
+                progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB / ${(total / 1024 / 1024).toFixed(2)} MB`;
+            } else {
+                // Không có Content-Length
+                progressBar.style.width = '100%'; // Hiển thị progress bar chạy vô hạn
+                progressBar.style.animation = 'progress-indeterminate 2s linear infinite';
+                progressPercentage.textContent = 'N/A';
+                progressSize.textContent = `${(loaded / 1024 / 1024).toFixed(2)} MB`;
+            }
+
+            // Tính tốc độ tải
+            const currentTime = Date.now();
+            const timeDiff = (currentTime - lastTime) / 1000; // giây
+            if (timeDiff > 0.5) {
+                const bytesDiff = loaded - lastLoaded;
+                const speed = (bytesDiff / 1024 / timeDiff).toFixed(2); // KB/s
+                progressSpeed.textContent = `${speed} KB/s`;
+                lastLoaded = loaded;
+                lastTime = currentTime;
             }
         }
+
+        // Tạo blob và tải xuống
+        const blob = new Blob(chunks);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = appName + '.apk';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        showNotification(`Đã tải ${appName} thành công!`);
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            return; // Đã hủy, không hiển thị lỗi
+        }
+        console.error('Error downloading:', error);
+        showNotification(`Lỗi khi tải ${appName}: ${error.message}`);
+    } finally {
+        progressContainer.classList.remove('show');
+        progressBar.style.animation = ''; // Xóa animation nếu có
+        buttons.forEach(btn => btn.disabled = false);
+    }
+}
 
         // Event Listeners
         document.querySelectorAll('.filter-btn').forEach(btn => {

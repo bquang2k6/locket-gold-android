@@ -377,3 +377,17 @@ h1 {
         width: 49%;
     }
 }
+@keyframes progress-indeterminate {
+    0% {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        width: 30%;
+    }
+    50% {
+        background: linear-gradient(45deg, #764ba2, #667eea);
+        width: 60%;
+    }
+    100% {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        width: 30%;
+    }
+}
